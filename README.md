@@ -2,7 +2,7 @@
 Code repository for the paper:
 **MultiPhys: Multi-Person Physics-aware 3D Motion Estimation**
 
-[Nicolas Ugrinovic](https://geopavlakos.github.io/), 
+[Nicolas Ugrinovic](http://www.iri.upc.edu/people/nugrinovic), 
 [Boxiao Pan](https://cs.stanford.edu/~bxpan/), 
 [Georgios Pavlakos](https://geopavlakos.github.io/), 
 [Despoina Paschalidou](https://paschalidoud.github.io/), 
