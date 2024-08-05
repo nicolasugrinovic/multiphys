@@ -156,7 +156,7 @@ If you find this code useful for your research, please consider citing the follo
 
 ```bibtex
 @inproceedings{ugrinovic2024multiphys,
-                author={Ugrinovic, Nicolas and Pan, Boxiao and Pavlakos, Georgios and Yuan, Ye and Paschalidou, Despoina and Shen, Bokui and Sanchez-Riera, Jordi and Moreno-Noguer, Francesc and Guibas, Leonidas},
+                author={Ugrinovic, Nicolas and Pan, Boxiao and Pavlakos, Georgios and Paschalidou, Despoina and Shen, Bokui and Sanchez-Riera, Jordi and Moreno-Noguer, Francesc and Guibas, Leonidas},
                 title={MultiPhys: Multi-Person Physics-aware 3D Motion Estimation},
                 booktitle={Conference on Computer Vision and Pattern Recognition (CVPR)},
                 year={2024}
