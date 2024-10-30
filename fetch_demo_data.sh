@@ -9,3 +9,4 @@ gdown https://drive.google.com/uc?id=12rwvDuxMs40Ed86TVxP2jzuH3R1vafvz
 unzip sample_data.zip
 unzip data.zip
 unzip results.zip
+
