@@ -1,9 +1,6 @@
 '''
-
-Adapted from EmbodiedPose/agents/agent_embodied_pose.py
-Modified By: Nicolas Ugrinovic
-
-
+Modified from EmbodiedPose repo: https://github.com/ZhengyiLuo/EmbodiedPose
+-----
 '''
 
 import gc
@@ -25,24 +22,19 @@ from uhc.khrylib.utils.torch import *
 from uhc.khrylib.utils.memory import Memory
 from uhc.khrylib.rl.core.critic import Value
 from uhc.utils.flags import flags
-from uhc.envs import env_dict
 from uhc.agents.agent_uhm import AgentUHM
 from uhc.smpllib.smpl_eval import compute_metrics
 from uhc.utils.math_utils import smpl_op_to_op
-
 from multiphys.data_loaders import data_dict
 from multiphys.envs import env_dict
 from embodiedpose.models import policy_dict
 from embodiedpose.core.reward_function import reward_func
 from embodiedpose.core.trajbatch_humor import TrajBatchHumor
 from embodiedpose.models.humor.utils.humor_mujoco import MUJOCO_2_SMPL
-
 from PIL import Image
 from utils.misc import save_img
 from pathlib import Path
-
 from utils.visu_tools import extract_video_frames
-
 import mujoco_py
 import cv2
 from utils.misc import plot
@@ -50,6 +42,8 @@ from utils.video import make_video
 from scipy.spatial.transform import Rotation as sRot
 from utils.misc import read_image_PIL
 from utils.misc import plot_skel_cv2
+
+
 
 def rot_img(img, show=False):
     im = Image.fromarray(img)
@@ -59,6 +53,7 @@ def rot_img(img, show=False):
     if show:
         plot(out_rot)
     return out_rot
+
 
 class AgentEmbodiedPoseMulti(AgentUHM):
 
@@ -74,11 +69,16 @@ class AgentEmbodiedPoseMulti(AgentUHM):
         self.num_warmup = 300
         self.num_supervised = 5
         self.fr_num = self.cfg.fr_num
+
+        ###################################################
         self.setup_vars()
         self.setup_data_loader()
-        # inits the KinPolicyHumorRes
-        self.setup_policy()
+        self.setup_policy()  # inits the KinPolicyHumorRes, NOTE: this is init only with one agent information
+        ###################################################
+        # the agent is loaded here and self.env is created
         self.setup_env()
+        # self.env
+        ###################################################
         self.setup_value()
         self.setup_optimizer()
         self.setup_logging()
@@ -138,25 +138,26 @@ class AgentEmbodiedPoseMulti(AgentUHM):
         with torch.no_grad():
             data_sample = self.data_loader.sample_seq(fr_num=20, fr_start=self.global_start_fr)
             context_multi = []
-            for sample in data_sample:
+            for sample in data_sample:  # iterate over the data of each agent
                 context_sample = self.policy_net.init_context(sample, random_cam=True)
                 context_multi.append(context_sample)
+        # save config in self
         self.cc_cfg = cfg.cc_cfg
 
         ######################################## Init Env ######################################
         self.env = env_dict[self.cfg.env_name](cfg, init_context=context_multi,
                                                cc_iter=cfg.policy_specs.get('cc_iter', -1),
                                                mode="train", agent=self)
-        # here the agent is already defined and in a T-pose lying in the floor
         ##########################################################################################
         self.env.seed(cfg.seed)
 
     def setup_policy(self):
         cfg, device, dtype = self.cfg, self.device, self.dtype
         data_sample = self.data_loader.sample_seq(fr_num=20, fr_start=self.global_start_fr)
-        # todo multi: maybe modify later for two agent data?
-        if len(data_sample)==2:
+        #  multi: this enables to work with multiple agents. Takes data from one agent to do the init
+        if len(data_sample) == 2:
             data_sample = data_sample[0]
+        # this is init with data from one agent
         self.policy_net = policy_net = policy_dict[cfg.policy_name](cfg, data_sample, device=device,
                                                                     dtype=dtype, mode=self.mode,
                                                                     agent=self)
@@ -227,37 +228,44 @@ class AgentEmbodiedPoseMulti(AgentUHM):
         for i, rend in enumerate(tqdm(renders[:j2_len])):
             file = img_files[i]
             img = read_image_PIL(file)
+
             j2d = joints2d_all[i]
             pred_j2d = pred_joints2d_all[i]
             img_w_kpts2d = plot_skel_cv2(img, j2d)
             if self.cfg.vis_pred_kpts:
                 img_w_kpts2d = plot_skel_cv2(img_w_kpts2d, pred_j2d, type="emb", alpha=0.6)
+
             rend = np.concatenate([img_w_kpts2d, rend], axis=1)
             outp = Path(f"{out_joint_imgs}/{i:06d}.png")
             save_img(outp, rend)
         make_video(outp)
 
     def eval_seq(self, take_key, loader, data_time):
+        debug = False
         curr_env = self.env
         with to_cpu(*self.sample_modules):
             with torch.no_grad():
                 # res = defaultdict(list)
-                res = [defaultdict(list), defaultdict(list)]
+                res = [defaultdict(list) for i in range(self.env.num_agents)]
                 self.policy_net.set_mode('test')
                 curr_env.set_mode('test')
+                ################
                 context_sample_all = loader.get_sample_from_key(take_key=take_key, full_sample=True,
                                                                 return_batch=True, dyncam=curr_env.agent.cfg.dyncam)
+
                 ar_context_all = []
                 for context_sample in context_sample_all:
                     ar_context = self.policy_net.init_context(context_sample, random_cam=(not "cam" in context_sample))
                     ar_context_all.append(ar_context)
 
                 ########################################################################################################
+                # initializes the simulation env
                 curr_env.load_context(ar_context_all)
+                # at this point, ALSO the agent has not changed pose yet
                 print("* Last load_context() *")
                 ########################################################################################################
                 # the simu is updated here!
-                state = curr_env.reset()
+                state = curr_env.reset()  # state is now a list of len 2
                 ########################################################################################################
                 if self.running_state is not None:
                     state = self.running_state(state)
@@ -266,47 +274,51 @@ class AgentEmbodiedPoseMulti(AgentUHM):
                 ########################### Starts the FOR LOOP ########################################################
                 renders = []
                 for t in range(10000):
-
-                    if self.cfg.visualizer=="sim_render":
+                    if self.cfg.visualizer == "sim_render":
                         for i in range(1, 5):
                             img = curr_env.sim.render(width=400, height=400, camera_name=f"camera{i}")
-                            path = Path(f"inspect_out/sim_render/{self.cfg.data_name}/{self.cfg.seq_name}/{data_time}/sim_cam{i}/%07d.png" % t)
+                            path = Path(
+                                f"inspect_out/sim_render/{self.cfg.data_name}/{self.cfg.seq_name}/{data_time}/sim_cam{i}/%07d.png" % t)
                             path.parent.mkdir(parents=True, exist_ok=True)
                             save_img(path, img)
-                    
+
                     action_all = []
-                    pred_qpos = curr_env.get_humanoid_qpos()  # shape: (76,)
+                    pred_qpos = curr_env.get_humanoid_qpos()  # shape: (76,) # print(pred_qpos[76:])
                     pred_jpos = self.env.get_wbody_pos().copy()  # shape: (72,)
                     for n in range(self.env.num_agents):
-                        gt_qpos = curr_env.context_dict[n]['qpos'][curr_env.cur_t] # shape: (76,)
+                        gt_qpos = curr_env.context_dict[n]['qpos'][curr_env.cur_t]  # shape: (76,)
                         res[n]['gt'].append(gt_qpos)
-                        target_qpos = curr_env.target[n]['qpos'] # shape: (1, 76)
+                        target_qpos = curr_env.target[n]['qpos']  # shape: (1, 76)
                         res[n]['target'].append(target_qpos)
                         ########################## predicted pose #######################
                         start = n * self.env.qpos_dim
                         end = (n + 1) * self.env.qpos_dim
                         res[n]['pred'].append(pred_qpos[start:end])
                         #################################################################
-    
+
                         if 'joints_gt' in curr_env.context_dict[n]:
-                            res[n]["gt_jpos"].append(smpl_op_to_op(self.env.context_dict[n]['joints_gt'][self.env.cur_t].copy()))
-                            res[n]["pred_jpos"].append(smpl_op_to_op(curr_env.get_wbody_pos().copy().reshape(24, 3)[MUJOCO_2_SMPL][curr_env.smpl_2op_submap]))
+                            res[n]["gt_jpos"].append(
+                                smpl_op_to_op(self.env.context_dict[n]['joints_gt'][self.env.cur_t].copy()))
+                            res[n]["pred_jpos"].append(smpl_op_to_op(
+                                curr_env.get_wbody_pos().copy().reshape(24, 3)[MUJOCO_2_SMPL][
+                                    curr_env.smpl_2op_submap]))
                         else:
-                            gt_jpos = self.env.gt_targets[n]['wbpos'][self.env.cur_t].copy() # shape: (72,)
+                            gt_jpos = self.env.gt_targets[n]['wbpos'][self.env.cur_t].copy()  # shape: (72,)
                             res[n]["gt_jpos"].append(gt_jpos)
                             start = n * 72
                             end = (n + 1) * 72
                             pred_jpos_ = pred_jpos[start:end]
                             res[n]["pred_jpos"].append(pred_jpos_)
-    
+
                         if self.cfg.model_specs.get("use_tcn", False):
                             # these are 14 joints in 3D with no translation
-                            world_body_pos = self.env.pred_tcn[n]['world_body_pos'].copy()[None,] # shape (1, 14, 3)
+                            world_body_pos = self.env.pred_tcn[n]['world_body_pos'].copy()[None,]  # shape (1, 14, 3)
                             res[n]['world_body_pos'].append(world_body_pos)
-                            world_trans = self.env.pred_tcn[n]['world_trans'].copy()[None,] # shape (1, 1, 3)
+                            # at least for the first timestep, this translation is very accurate
+                            world_trans = self.env.pred_tcn[n]['world_trans'].copy()[None,]  # shape (1, 1, 3)
                             res[n]['world_trans'].append(world_trans)
-    
-                        state_var = tensor(state[n]).unsqueeze(0).double() # shape: (1, 6455)
+
+                        state_var = tensor(state[n]).unsqueeze(0).double()  # shape: (1, 6455)
                         trans_out = self.trans_policy(state_var)
                         ############################ Kinematic policy #####################################
                         action = self.policy_net.select_action(trans_out, mean_action=True)[0].numpy()
@@ -315,6 +327,7 @@ class AgentEmbodiedPoseMulti(AgentUHM):
 
                     ############################ The state gets updated here ###########################
                     next_state, env_reward, done, info = curr_env.step(action_all, kin_override=False)
+                    # update dynamic camera
                     for n in range(self.env.num_agents):
                         if isinstance(ar_context_all[n]['cam'], list):
                             cam_params = ar_context_all[n]['cam'][curr_env.cur_t]
@@ -328,12 +341,13 @@ class AgentEmbodiedPoseMulti(AgentUHM):
                         data_v = cv2.flip(data, 0)
                         renders.append(data_v)
                     ####################################################################################
-
+                    # NUK: added by me
                     if t % 20 == 0:
                         if self.cfg.debug:
                             done = True
                         print(f"Step {t}: is done? {done}, Failed? {info['fail']}, percent {info['percent']}")
                         # just for debugging
+
                     if self.cfg.render:
                         curr_env.render()
                     if self.running_state is not None:
@@ -357,15 +371,20 @@ class AgentEmbodiedPoseMulti(AgentUHM):
                             start = n * self.env.qpos_dim
                             end = (n + 1) * self.env.qpos_dim
                             res[n]['pred'].append(pred_pose[start:end])
+
                             if 'joints_gt' in curr_env.context_dict[n]:
-                                res[n]["gt_jpos"].append(smpl_op_to_op(self.env.context_dict[n]['joints_gt'][self.env.cur_t].copy()))
-                                res[n]["pred_jpos"].append(smpl_op_to_op(curr_env.get_wbody_pos().copy().reshape(24, 3)[MUJOCO_2_SMPL][curr_env.smpl_2op_submap]))
+                                res[n]["gt_jpos"].append(
+                                    smpl_op_to_op(self.env.context_dict[n]['joints_gt'][self.env.cur_t].copy()))
+                                res[n]["pred_jpos"].append(smpl_op_to_op(
+                                    curr_env.get_wbody_pos().copy().reshape(24, 3)[MUJOCO_2_SMPL][
+                                        curr_env.smpl_2op_submap]))
                             else:
                                 res[n]["gt_jpos"].append(self.env.gt_targets[n]['wbpos'][self.env.cur_t].copy())
                                 start = n * 72
                                 end = (n + 1) * 72
                                 pred_jpos_ = pred_jpos[start:end]
                                 res[n]["pred_jpos"].append(pred_jpos_)
+
                             ###### When done, collect the last simulated state.
                             res[n] = {k: np.vstack(v) for k, v in res[n].items()}
                             res[n]['percent'] = info['percent']
@@ -374,8 +393,6 @@ class AgentEmbodiedPoseMulti(AgentUHM):
                         return res
 
                     state = next_state
-
-
 
     def data_collect(self, num_jobs=10, num_samples=20, full_sample=False):
         cfg = self.cfg
@@ -397,7 +414,9 @@ class AgentEmbodiedPoseMulti(AgentUHM):
         return data_collected
 
     def data_collect_worker(self, queue, num_samples=20, full_sample=False):
+
         curr_env = self.env
+
         with to_cpu(*self.sample_modules):
             with torch.no_grad():
                 res = []
@@ -445,17 +464,13 @@ class AgentEmbodiedPoseMulti(AgentUHM):
                 trans_out = self.trans_policy(state_var)
                 mean_action = True
                 action = self.policy_net.select_action(trans_out, mean_action)[0].numpy()
-
                 action = int(action) if self.policy_net.type == 'discrete' else action.astype(np.float64)
+                humor_target = np.concatenate(
+                    [self.env.context_dict[k][self.env.cur_t + 1].flatten() for k in self.env.agg_data_names])
+                sim_humor_state = np.concatenate(
+                    [self.env.cur_humor_state[k].numpy().flatten() for k in self.env.motion_prior.data_names])
                 #################### ZL: Jank Code.... ####################
-                # Gather GT data. Since this is before step, the gt needs to be advanced by 1. This corresponds to the next state,
-                # as we collect the data after the step.
-                humor_target = np.concatenate([self.env.context_dict[k][self.env.cur_t + 1].flatten() for k in self.env.agg_data_names])
-                sim_humor_state = np.concatenate([self.env.cur_humor_state[k].numpy().flatten() for k in self.env.motion_prior.data_names])
-                #################### ZL: Jank Code.... ####################
-
                 next_state, env_reward, done, info = self.env.step(action)
-
                 if self.running_state is not None:
                     next_state = self.running_state(next_state)
                 # use custom or env reward
@@ -472,18 +487,19 @@ class AgentEmbodiedPoseMulti(AgentUHM):
                     reward += self.env.end_reward
                 # logging
                 logger.step(self.env, env_reward, c_reward, c_info, info)
+
                 mask = 0 if done else 1
                 exp = 1 - mean_action
                 self.push_memory(memory, state, action, mask, next_state, reward, exp, humor_target, sim_humor_state)
+
                 if pid == 0 and self.render:
                     for _ in range(10):
                         self.env.render()
+
                 if done:
                     freq_dict[self.data_loader.curr_key].append([info['percent'], self.data_loader.fr_start])
                     break
-
                 state = next_state
-
             logger.end_episode(self.env)
         logger.end_sampling()
 
@@ -518,7 +534,8 @@ class AgentEmbodiedPoseMulti(AgentUHM):
         cfg.eval_n_epochs = 100
         # cfg.policy_specs['min_batch_size'] = 500
 
-        self.cfg.fr_num = 300 if self.iter < self.num_supervised else max(int(min(self.iter / 100, 1) * self.fr_num), self.cfg.data_specs.get("t_min", 30))
+        self.cfg.fr_num = 300 if self.iter < self.num_supervised else max(int(min(self.iter / 100, 1) * self.fr_num),
+                                                                          self.cfg.data_specs.get("t_min", 30))
 
         if self.iter >= self.num_warmup:
             self.env.simulate = True
@@ -528,7 +545,6 @@ class AgentEmbodiedPoseMulti(AgentUHM):
             self.cfg.model_specs['load_scene'] = False
             # warm up should not load the scene......
 
-        # cfg.policy_specs['min_batch_size'] = 50
         if self.cfg.lr != self.policy_net.optimizer.param_groups[0]['lr']:
             self.policy_net.setup_optimizers()
 
@@ -583,12 +599,16 @@ class AgentEmbodiedPoseMulti(AgentUHM):
             advantages, returns = estimate_advantages(rewards, masks, values, self.gamma, self.tau)
             self.update_policy(states, actions, returns, advantages, exps)
 
-        if self.cfg.policy_specs.get("init_update", False) or self.cfg.policy_specs.get("step_update", False) or self.cfg.policy_specs.get("full_update", False):
+        if self.cfg.policy_specs.get("init_update", False) or self.cfg.policy_specs.get("step_update",
+                                                                                        False) or self.cfg.policy_specs.get(
+                "full_update", False):
             print("Supervised:")
+
+
         if self.cfg.policy_specs.get("step_update", False):
-            self.policy_net.update_supervised(states, humor_target, sim_humor_state, seq_data, num_epoch=int(self.cfg.policy_specs.get("num_step_update", 10)))
+            self.policy_net.update_supervised(states, humor_target, sim_humor_state, seq_data,
+                                              num_epoch=int(self.cfg.policy_specs.get("num_step_update", 10)))
 
         gc.collect()
         torch.cuda.empty_cache()
-
         return time.time() - t0
