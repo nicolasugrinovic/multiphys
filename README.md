@@ -135,11 +135,15 @@ generate a folder with the results, following the structure:
 
 
 ## Evaluation
+You first need to genetare the physically corrected motion for each dataset as explained
+above. Results should be saved in the folder `\results\scene+tcn_voxel_4_5_chi3d_multi_hum\DATASET_NAME`, 
+for each dataset.
 
 For evaluation, use the script `metrics/compute_metrics_all.py`. This generate 
 the metrics for each specified dataset and each type of metric, (i.e., pose, physics-based, and 
 penetration (sdf)). 
-To run the evaluation for a given dataset, e.g. CHI3D run the following:
+To run the evaluation for a given dataset, e.g. CHI3D run the following commands. Please make sure to 
+change all the paths in the scripts to point to your own folders:
 ```bash
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia:/home/nugrinovic/.mujoco/mujoco210/bin;
 # pose metrics
