@@ -133,11 +133,30 @@ generate a folder with the results, following the structure:
               ├── ...
 ```
 
+
+## Evaluation
+
+For evaluation, use the script `metrics/compute_metrics_all.py`. This generate 
+the metrics for each specified dataset and each type of metric, (i.e., pose, physics-based, and 
+penetration (sdf)). 
+To run the evaluation for a given dataset, e.g. CHI3D run the following:
+```bash
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia:/home/nugrinovic/.mujoco/mujoco210/bin;
+# pose metrics
+python metrics/compute_metrics_all.py --data_name chi3d --metric_type pose_mp
+# physics-based metrics
+python metrics/compute_metrics_all.py --data_name chi3d --metric_type phys
+# inter-person penetration with SDF
+python metrics/compute_metrics_all.py --data_name chi3d --metric_type sdf
+
+```
+You can choose any of the 3 datasets: ['chi3d', 'hi4d', 'expi']. 
+
 ## TODO List
 
 - [x] Demo/inference code
 - [ ] Data pre-processing code
-- [ ] Evaluation
+- [x] Evaluation
 
 ## Acknowledgements
 
