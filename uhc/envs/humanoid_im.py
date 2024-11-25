@@ -1312,7 +1312,7 @@ class HumanoidEnv(mujoco_env.MujocoEnv):
             body_diff = self.calc_body_diff()
             body_fail = body_diff > self.body_diff_thresh if self.mode == "train" else body_diff > self.body_diff_thresh_test
 
-        # body_fail = False  # PHC-eval
+        # body_fail = False  # PHC-metrics
 
         fail = fail or body_fail
         end = (self.cur_t >= cfg.env_episode_len) or (self.cur_t + self.start_ind >= self.expert["len"] + cfg.env_expert_trail_steps - 1)
@@ -1372,9 +1372,9 @@ class HumanoidEnv(mujoco_env.MujocoEnv):
             init_pose = init_pose_exp
             init_vel = init_vel_exp
 
-        # init_pose[0] += 0.5  # PHC-eval
-        # init_pose[2] = 0.3  # PHC-eval
-        # init_pose[3:7] = np.array([0, 0, 0, 1]) # PHC-eval
+        # init_pose[0] += 0.5  # PHC-metrics
+        # init_pose[2] = 0.3  # PHC-metrics
+        # init_pose[3:7] = np.array([0, 0, 0, 1]) # PHC-metrics
         self.set_state(init_pose, init_vel)
         # print("Resetting model")
 

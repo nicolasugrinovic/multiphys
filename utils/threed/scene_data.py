@@ -197,7 +197,7 @@ def get_humanise_scenes_data(args, device, is_val, scene_norm=True):
     T2 = Q(axis=[-1, 0, 0], angle=pi/2.).transformation_matrix.astype(np.float32)
     T = T2 #@ T1
 
-    if is_val: # only read eval scenes
+    if is_val: # only read metrics scenes
         scene_paths = [c for c in scene_paths if int(c.stem.split('_')[0][5:]) >= 600]
     scene_lst, names = [], []
 

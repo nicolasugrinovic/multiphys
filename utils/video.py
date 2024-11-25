@@ -202,7 +202,7 @@ def run_deeplab_v3(img_dir, img_shape, out_dir, batch_size=16, img_extn='png'):
         img_batch = img_batch.to(device)
         # print(img_batch.size())
 
-        # eval and save
+        # metrics and save
         with torch.no_grad():
             output = model(img_batch)['out']
         seg = torch.logical_not(output.argmax(1) == 15).to(torch.float) # the max probability is the person class

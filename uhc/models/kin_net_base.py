@@ -472,8 +472,8 @@ class KinNetBase(nn.Module):
     #     loss_unweighted_dict = {}
     #     for k, v in weights.items():
     #         if k in locals():
-    #             loss = eval(k) * v
-    #             total_loss += loss; loss_dict[k] = loss.detach().item(); loss_unweighted_dict[k + "-uw"] = eval(k).detach().item()
+    #             loss = metrics(k) * v
+    #             total_loss += loss; loss_dict[k] = loss.detach().item(); loss_unweighted_dict[k + "-uw"] = metrics(k).detach().item()
     #     return total_loss, loss_dict, loss_unweighted_dict
 
     def compute_loss_lite(self, pred_qpos, gt_qpos):

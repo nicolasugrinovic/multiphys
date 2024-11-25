@@ -119,7 +119,7 @@ def bodies_to_world():
 
             if 1:
                 # save_pointcloud(jpos_pred[p_id, 0], f"inspect_out/slahmr/prep_eval/joints/{seq_name}/jpos_pred_sla_{p_id}.ply")
-                # save_pointcloud(jpos_pred_w_rot[0], f"inspect_out/eval/joints/jpos_pred_w_rot_sla_{p_id}.ply")
+                # save_pointcloud(jpos_pred_w_rot[0], f"inspect_out/metrics/joints/jpos_pred_w_rot_sla_{p_id}.ply")
                 save_pointcloud(jpos_pred_world[idx],
                                 f"inspect_out/slahmr/viw_to_world/{seq_name}/joints/jpos_pred_world_{idx}_{p_id}.ply")
                 save_pointcloud(jpos_pred_world_rot[idx],

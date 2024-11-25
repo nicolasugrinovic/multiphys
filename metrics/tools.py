@@ -3,18 +3,13 @@ import os
 import numpy as np
 import torch
 
-from embpose_util.loaders import load_smpl_body_model
+from util.loaders import load_smpl_body_model
 from third_party.slahmr.optim.output import load_result, get_results_paths
 from third_party.slahmr.geometry.pcl import align_pcl
 from scipy.optimize import linear_sum_assignment
 
 BASE_DIR = os.path.abspath(f"{__file__}/../../")
 JOINT_REG_PATH = f"{BASE_DIR}/_DATA/body_models/J_regressor_h36m.npy"
-
-
-EGOBODY_ROOT = "/path/to/egobody"
-TDPW_ROOT = "/path/to/3DPW"
-
 
 
 def match_w_hungarian(joints_3d_rel, joints_3d_sla_rel, clip=True):
