@@ -90,8 +90,10 @@ This code was tested on Ubuntu 20.04 LTS and requires a CUDA-capable GPU.
 You MAY need to run the following or similar commands, depending on your system:
     ```bash
    sudo apt-get install libglfw3-dev libgles2-mesa-dev
-    ```
-
+    ``` 
+6. **For evaluation**: to run the collision-based penetration metric found in the evaluation scripts, 
+you need to properly install the SDF package. 
+Please follow the instructions found [here](https://github.com/nicolasugrinovic/multiphys/blob/main/sdf/README.md). 
 
 ## Generating physically corrected motion.
 The data used here, including SLAHMR estimates should have 
@@ -142,6 +144,9 @@ for each dataset.
 For evaluation, use the script `metrics/compute_metrics_all.py`. This generate 
 the metrics for each specified dataset and each type of metric, (i.e., pose, physics-based, and 
 penetration (sdf)). 
+Please note that for running the penetration metric based on SDF, you need to install
+the sdf library. Follow the instructions found [here](https://github.com/nicolasugrinovic/multiphys/blob/main/sdf/README.md). 
+
 To run the evaluation for a given dataset, e.g. CHI3D run the following commands. Please make sure to 
 change all the paths in the scripts to point to your own folders:
 ```bash
