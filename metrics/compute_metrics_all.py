@@ -60,11 +60,7 @@ def dict_to_csv(avg_dict, out_path_res, sep=","):
 
 
 def main(args):
-    if "oriong" in hostname:
-        ROOT = "/sailhome/nugrinov/code/CVPR_2024/EmbodiedPose"
-    else:
-        ROOT = "/home/nugrinovic/code/CVPR_2024/EmbodiedPose"
-    RES_ROOT = f"{ROOT}/results/scene+/tcn_voxel_4_5_chi3d_multi_hum/results"
+    RES_ROOT = f"./results/scene+/tcn_voxel_4_5_chi3d_multi_hum/results"
     path = f"{RES_ROOT}/{args.data_name}"
 
     if args.metric_type == 'sdf':

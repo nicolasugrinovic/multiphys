@@ -294,13 +294,8 @@ Tz180 = torch.from_numpy(T).cuda()
 
 
 def get_emb_paths(data_name, exp_name, slahmr_overwrite=False, get_add=False, sla_root=False):
-    if "oriong" in hostname:
-        ROOT = "/sailhome/nugrinov/code/CVPR_2024/EmbodiedPose"
-        SLA_ROOT = "/sailhome/nugrinov/code/CVPR_2024/slahmr_release/slahmr"
-
-    else:
-        ROOT = "/home/nugrinovic/code/CVPR_2024/EmbodiedPose"
-        SLA_ROOT = "/home/nugrinovic/code/CVPR_2024/slahmr_release/slahmr"
+    ROOT = "/home/nugrinovic/code/CVPR_2024/multiphys-test"
+    SLA_ROOT = "/home/nugrinovic/code/CVPR_2024/slahmr_release/slahmr"
 
     RES_ROOT = f"{ROOT}/results/scene+/tcn_voxel_4_5_chi3d_multi_hum/results"
     SAMP_DATA_ROOT = f"{ROOT}/sample_data"
