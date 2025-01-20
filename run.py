@@ -26,7 +26,7 @@ from utils.misc import write_str_txt
 from utils.misc import write_pickle
 import yaml
 from utils.visu_tools import visu_estimates
-from multiphys.metrics.metrics_mp import compute_metrics_mp
+from metrics.metrics_mp import compute_metrics_mp
 from utils.inference import get_datetime, print_metrics
 
 

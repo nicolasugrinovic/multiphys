@@ -3,7 +3,7 @@ import os
 import numpy as np
 import torch
 
-from util.loaders import load_smpl_body_model
+from embpose_util.loaders import load_smpl_body_model
 from third_party.slahmr.optim.output import load_result, get_results_paths
 from third_party.slahmr.geometry.pcl import align_pcl
 from scipy.optimize import linear_sum_assignment
