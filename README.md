@@ -1,4 +1,4 @@
-#  MultiPhys: Physics-aware 3D Motion 
+# MultiPhys: Physics-aware 3D Motion 
 Code repository for the paper:
 **MultiPhys: Multi-Person Physics-aware 3D Motion Estimation**
 
