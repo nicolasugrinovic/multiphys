@@ -141,6 +141,27 @@ You first need to genetare the physically corrected motion for each dataset as e
 above. Results should be saved in the folder `\results\scene+tcn_voxel_4_5_chi3d_multi_hum\DATASET_NAME`, 
 for each dataset.
 
+### Prepare results
+Then, you need to process the results to prepare them for the evaluation scripts. To do so, you need
+to run the `metrics/prepare_pred_results.py` script, specifying the dataset name and the experiment name, 
+for example:
+```bash
+metrics/prepare_pred_results.py --data_name chi3d --exp_name slahmr_override_loop2
+```
+This will generate `.pkl` files with the names of the subjects, for example `s02.pkl` for CHI3D under the 
+experiment folder. In the case, you want to run the penetration metric with SDF, you need to 
+generate a file that saves the vertices for each sequence. To do this, you need to add the `--save_verts` option, 
+thus, run the following command.
+```bash
+metrics/prepare_pred_results.py --data_name chi3d --exp_name slahmr_override_loop2 --save_verts
+```
+This will generate `_verts.pkl` files with the names of the subjects, for example `s02_verts.pkl` for CHI3D under the 
+experiment folder.
+
+You need to either generate both the `.pkl` and `_verts.pkl` also for each baseline you want to measure (EmbPose-mp, 
+SLAHMR) or you can download the pre-processed results from [HERE](link)
+
+### Run evaluation
 For evaluation, use the script `metrics/compute_metrics_all.py`. This generate 
 the metrics for each specified dataset and each type of metric, (i.e., pose, physics-based, and 
 penetration (sdf)). 
