@@ -1,6 +1,7 @@
 from utils.misc import write_str_txt
 from metrics.compute_metrics import compute_metrics_main
 import socket
+
 hostname = socket.gethostname()
 import sys
 
@@ -16,11 +17,11 @@ def updata_dict(args, exp_n, res_dict, print_str_eval, sub_dir=None):
 def filter_dict(results, metric_type):
     keep_keys = {
         'pose_mp': ['ga_jmse', 'fa_jmse', 'pampjpe'],
-        'pose': ['root_dist',	'pa_mpjpe',	'mpjpe',	'accel_dist',	'vel_dist'],
+        'pose': ['root_dist', 'pa_mpjpe', 'mpjpe', 'accel_dist', 'vel_dist'],
         'sdf': ['penet_sdf'],
         'phys': ['skate', 'pentration', 'float'],
     }
-    
+
     new_dict = {}
     for k in results:
         if k in keep_keys[metric_type]:
@@ -43,7 +44,7 @@ def dict_to_csv(avg_dict, out_path_res, sep=","):
             subHead.append(k)
         subCSV += f"\n"
         CSV += subCSV
-    HEAD = f"Model{sep}"+f"{sep}".join(subHead)
+    HEAD = f"Model{sep}" + f"{sep}".join(subHead)
     # CSV = f"\n{HEAD}\n{CSV}"
     CSV = f"{HEAD}\n{CSV}"
 
@@ -76,18 +77,18 @@ def main(args):
     model_types_all = ['slahmr', 'baseline', 'glamr']
 
     exp_names_all = [
-                     'normal_op',
-                     'slahmr_override_loop2',
-                     ]
+        # 'normal_op',
+        'slahmr_override_loop2',
+    ]
 
     if args.data_name == 'expi':
         exp_names_all = [
-            'normal_op',
+            # 'normal_op',
             'slahmr_override_loop2',
         ]
     elif args.data_name == 'hi4d':
         exp_names_all = [
-            'normal_op',
+            # 'normal_op',
             'slahmr_override_loop2',
         ]
 
@@ -136,19 +137,22 @@ def main(args):
     if args.log:
         f.close()
 
+
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', type=int, choices=[0, 1], default=0)
     parser.add_argument('--model_type', type=str, choices=['slahmr', 'baseline'], default='baseline')
     parser.add_argument('--data_name', type=str, choices=['chi3d', 'hi4d', 'expi'], default='hi4d')
-    parser.add_argument('--exp_name', type=str, choices=['normal_op', 'slahmr_override', 'overwrite_gt'], default='normal_op')
+    parser.add_argument('--exp_name', type=str, choices=['normal_op', 'slahmr_override', 'overwrite_gt'],
+                        default='normal_op')
     parser.add_argument('--filter_seq', type=str, default=None)
     parser.add_argument('--verbose', type=int, choices=[0, 1], default=0)
     parser.add_argument('--use_wbpos', type=int, choices=[0, 1], default=0)
     parser.add_argument('--use_smpl_gt', type=int, choices=[0, 1], default=0)
-    parser.add_argument('--metric_type', type=str, default='pose_mp',  choices=['pose_mp', 'sdf', 'phys'])
-    parser.add_argument('--threshold', type=float,  default=0.1, help="threshold for sdf loss")
+    parser.add_argument('--metric_type', type=str, default='pose_mp', choices=['pose_mp', 'sdf', 'phys'])
+    parser.add_argument('--threshold', type=float, default=0.1, help="threshold for sdf loss")
     parser.add_argument("--sub_dir", type=str, default=None)
     parser.add_argument("--sla_exp_name", type=str, default=None)
     parser.add_argument('--log', type=int, choices=[0, 1], default=0)

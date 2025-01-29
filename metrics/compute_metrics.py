@@ -75,18 +75,18 @@ def compute_metrics_main(args, model_type='baseline', exp_names_all=None):
 
     if exp_names_all is None:
         exp_names_all = [
-                        'normal_op', # baseline
+                        # 'normal_op', # baseline
                          'slahmr_override_loop2',
                          ]
 
     if args.data_name == 'expi':
         exp_names_all = [
-            'normal_op',
+            # 'normal_op',
             'slahmr_override_loop2',
         ]
     elif args.data_name == 'hi4d':
         exp_names_all = [
-            'normal_op',
+            # 'normal_op',
             'slahmr_override_loop2',
         ]
 

@@ -6,7 +6,6 @@ from pathlib import Path
 from metrics.prepare_slahmr_results import parse_smpl_data
 import socket
 from utils.smpl_robot import from_qpos_to_verts_w_model
-import joblib
 import torch
 
 from utils.process_utils import load_humanoid
@@ -15,18 +14,22 @@ from pyquaternion import Quaternion as Q
 from metrics.prepare_slahmr_results import parse_emb_gt_data
 from metrics.prepare_slahmr_results import get_smpl_gt_data
 from metrics.prepare_slahmr_results import smpl_to_qpose_torch
-from metrics.prepare_slahmr_results import transform_coords_smpl_data
 from metrics.prepare_slahmr_results import match_3d_joints
 from metrics.prepare_slahmr_results import transform_pred_joints
 from metrics.prepare_slahmr_results import get_emb_robot_models
 from metrics.prepare_slahmr_results import rot_pose_180z
 from metrics.prepare_slahmr_results import apply_transform
+from metrics.prepare_slahmr_results import get_emb_paths
 from metrics.prepare import parse_cam2world
 from metrics.prepare import get_cam_from_preds
 from metrics.prepare import get_all_results
 
 from uhc.smpllib.torch_smpl_humanoid import Humanoid
 from utils.smpl import smpl_to_verts
+
+from collections import defaultdict
+from embodiedpose.models.humor.utils.humor_mujoco import MUJOCO_2_SMPL
+from metrics.prepare import get_proc_data
 
 smpl_robot, humanoid, cc_cfg = load_humanoid()
 
@@ -38,6 +41,7 @@ def rotate_180z(pred_jpos):
     pred_jpos_r = (Tz180[None, :3, :3] @ pred_jpos.transpose(0, 2, 1)).transpose(0, 2, 1)
     pred_jpos_r = pred_jpos_r.reshape(-1, 72)
     return pred_jpos_r
+
 
 def get_gt_data(args, subj_name):
     ROOT = "."
@@ -53,9 +57,9 @@ def get_gt_data(args, subj_name):
 
     keys = sorted(data_chi3d.keys())
     print(f"\nKEYS from  GT PROC data are: {keys}\n")
-    data_vars =  data_chi3d[keys[0]].keys()
+    data_vars = data_chi3d[keys[0]].keys()
     print(f"\nVARS from GT P1 PROC data are: {data_vars}")
-    data_vars_2 =  data_chi3d_2[keys[0]].keys()
+    data_vars_2 = data_chi3d_2[keys[0]].keys()
     print(f"VARS from GT P2 PROC data are: {data_vars_2}\n")
 
     return data_chi3d, data_chi3d_2, chi3d_path
@@ -125,16 +129,11 @@ def order_persons(all_results, key):
         save_pointcloud(gt_jpos[1], f"{op}/{key}/joints-rel_ord/{args.exp_name}/gt_jpos_1.ply")
         save_pointcloud(pred_jpos[0], f"{op}/{key}/joints-rel_ord/{args.exp_name}/pred_jpos_0.ply")
         save_pointcloud(pred_jpos[1], f"{op}/{key}/joints-rel_ord/{args.exp_name}/pred_jpos_1.ply")
-    
+
     return all_results
-        
+
 
 def prepare(args, debug=False):
-    from collections import defaultdict
-    from embodiedpose.models.humor.utils.humor_mujoco import SMPL_2_OP, MUJOCO_2_SMPL
-    from metrics.prepare_slahmr_results import get_emb_paths
-    from metrics.prepare import get_proc_data
-
     """
     preprocess CHI3D results files that have been divided into several small files,
     each one save in the results folder of the corresponding sequence
@@ -160,9 +159,6 @@ def prepare(args, debug=False):
         all_results = get_all_results(path, is_heuristic=args.optim_heuristics)
 
         for n, seq_name in enumerate(tqdm(all_results)):
-            # key = "s02_Grab_12"
-            # gt_chi3d = get_seq_gt_data(data_chi3d_p1, data_chi3d_p2, key)
-
             gt_chi3d, Rt = parse_emb_gt_data(data_chi3d_p1, data_chi3d_p2, seq_name)
             smpl_dict_gt, smpl_gt_jts = get_smpl_gt_data(gt_chi3d)
 
@@ -248,16 +244,6 @@ def prepare(args, debug=False):
 
             tqdm.write(f"{args.exp_name} - {subj_name} - {seq_name} - {rot_str}")
 
-            if debug:
-                from utils.joints3d import joints_to_skel
-                op = f"inspect_out/prepare_preds/{args.data_name}/{args.exp_name}/{seq_name}"
-                # joints_to_skel(jpos_pred[:, 0].cpu(), f"{op}/skels_pred_{n:03d}.ply", format='smpl', radius=0.015)
-                # joints_to_skel(j_pred_cam[:, 0].cpu(), f"{op}/skels_cam_{n:03d}.ply", format='smpl', radius=0.015)
-                joints_to_skel(j_pred_world[:, 0].cpu(), f"{op}/skels_world_{n:03d}.ply", format='smpl', radius=0.015)
-                joints_to_skel(smpl_gt_jts[:, 0].cpu(), f"{op}/skels_smplgt_{n:03d}.ply", format='smpl', radius=0.015)
-                joints_to_skel(j_pred_world[:, -1].cpu(), f"{op}/skels_world_{n:03d}.ply", format='smpl', radius=0.015)
-                joints_to_skel(smpl_gt_jts[:, -1].cpu(), f"{op}/skels_smplgt_{n:03d}.ply", format='smpl', radius=0.015)
-
             # match pred poses with GT poses, they are not in the same order
             # match j_gts from embdata  w/ slahmr preds in relative 3D space
             # row_ind, col_ind = match_3d_joints(j_pred_rot, j_gts)
@@ -293,39 +279,20 @@ def prepare(args, debug=False):
             trans = torch.stack(trans)
             mean_shape = mean_shape.float()
 
-            if debug:
-                from utils.misc import save_mesh
-                from utils.misc import save_pointcloud
-                op = f"inspect_out/prepare_res_meshes/{args.data_name}/{args.exp_name}/{seq_name}"
-                # op = f"inspect_out/prepare_res_meshes_alt/{args.data_name}/{args.exp_name}/{seq_name}"
-                idx = 0
-                verts, faces = smpl_to_verts(pose_aa[:, idx], trans[:, idx], betas=mean_shape[:, :10])
-                save_mesh(verts[0], faces, f"{op}/pred_pose_{idx:03d}.ply")
-                trans_ = torch.zeros_like(trans)
-                verts, faces = smpl_to_verts(pose_aa[:, idx], trans_[:, idx], betas=mean_shape[:, :10])
-                save_mesh(verts[0], faces, f"{op}/pred_pose_{idx:03d}_root.ply")
-
-                root1 = qpos_pred[0, 0, None, :3]
-                root2 = qpos_pred[1, 0, None, :3]
-                save_pointcloud(root1, f"{op}/pred_root_p1.ply")
-                save_pointcloud(root2, f"{op}/pred_root_p2.ply")
-
-
             # do matching to get each correct kpts, copy slahmr code
             for p_id in range(len(jpos_pred[:2])):
                 # NOTE: for some reason we have to rotate the joints and SMPL 180 over z-axis --> only when using gt from embpose.
                 # these are now directly from smpl
                 gt_jts = smpl_gt_jts[col_ind_smpl[p_id]]
                 # pose_aa_w_rot_i, trans_w_rot_i, betas = transform_coords_smpl_data(p_id, pose_aa, trans, mean_shape, Rt, device)
-                qpos_rot = smpl_to_qpose_torch(pose_aa[p_id].cuda(), models[p_id], trans=trans[p_id].cuda(), count_offset=False)
+                qpos_rot = smpl_to_qpose_torch(pose_aa[p_id].cuda(), models[p_id], trans=trans[p_id].cuda(),
+                                               count_offset=False)
                 qpos_rot = qpos_rot.cpu().numpy()
 
                 gt_data = {}
                 gt_data_verts = {}
                 # qpos use only to compute the root metric
-                # gt_data['gt'] = emb_data[col_ind_smpl[p_id]]['gt'][:seq_len_min] #.cpu().numpy()
 
-                # BEWARE: dummy value as this metric is not important for now
                 gt_data['gt'] = qpos_rot[:seq_len_min]
                 gt_data['pred'] = qpos_rot[:seq_len_min]
                 # joints these are used to compute MPJPE
@@ -338,7 +305,7 @@ def prepare(args, debug=False):
                 gt_data['percent'] = 1.0
                 gt_data['fail_safe'] = False
 
-                # convert slahrm prediction to wbpos/jpos
+                # convert slahmr prediction to wbpos/jpos
                 humanoid_fk = Humanoid(model=model)
                 qpos_rot_t = torch.from_numpy(qpos_rot).float()
                 fk_result = humanoid_fk.qpos_fk(qpos_rot_t, to_numpy=False)
@@ -398,35 +365,24 @@ def prepare(args, debug=False):
 
 
 def main(args):
-    from metrics.prepare_slahmr_results import prepare_slahmr
     if args.do_all:
-
-        EXPERIMENTS = [
-                        'normal_op',
-                       'slahmr_override',
-                       'slahmr_override_loop2',
-                       'slahmr_override_loop3',
-                       'slahmr_override_loop4',
-                       'slahmr_override_loop5',
-                       ]
-
+        # choose which experiment results to taken into account
+        EXPERIMENTS = ['normal_op', 'slahmr_override_loop2', ]
         for exp in EXPERIMENTS:
             print(f"EXPERIMENT: {exp}...")
             args.exp_name = exp
             prepare(args, debug=False)
-            # if exp== 'normal_op':
-            #     prepare_slahmr(args)
     else:
         prepare(args, debug=False)
 
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--filter", type=int, choices=[0, 1], default=0)
     parser.add_argument("--debug", type=int, choices=[0, 1], default=0)
     parser.add_argument("--do_all", type=int, choices=[0, 1], default=0)
-    # parser.add_argument("--subject", type=str, default=None)
     parser.add_argument("--exp_name", type=str, default='normal_op')
     parser.add_argument("--vid_name", type=str, default='3_results_w_2d_p1_cat_sla')
     parser.add_argument("--data_name", type=str, default='chi3d', choices=['chi3d', 'hi4d', 'expi'])

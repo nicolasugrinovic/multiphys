@@ -17,9 +17,22 @@ from embodiedpose.models.humor.utils.humor_mujoco import MUJOCO_2_SMPL
 from metrics.tools import match_w_hungarian
 from metrics.prepare import parse_cam2world
 from collections import defaultdict
-from multiphys.process_data.process.process import get_pose_aa_from_slahmr_init_all
 
 hostname = get_hostname()
+
+
+def get_pose_aa_from_slahmr_init_all(res_dict):
+    # originally getting only the 1st frame info, but to override we need all
+    B, T, _ = res_dict["pose_body"].shape
+    body_pose_ = res_dict["pose_body"].cpu().numpy()
+    betas = res_dict["betas"][:, None, :10].cpu().numpy()
+    trans_orig = res_dict["trans"].cpu().numpy()
+    global_orient = res_dict["root_orient"].cpu().numpy()
+    body_pose = np.zeros([B, T, 69]).astype(np.float32)
+    body_pose[:, :, :63] = body_pose_
+    pose_aa = np.concatenate([global_orient, body_pose], axis=-1)
+    return pose_aa, trans_orig, betas
+
 
 def load_humanoid():
     print("Loading humanoid...")
@@ -35,8 +48,7 @@ def load_humanoid():
 
 
 def get_camera_transform(seq, vid_name, return_gnd=False, data_name='chi3d'):
-
-    SLA_ROOT =  "/home/nugrinovic/code/CVPR_2024/slahmr_release/slahmr"
+    SLA_ROOT = "/home/nugrinovic/code/CVPR_2024/slahmr_release/slahmr"
 
     res_dir = f"{SLA_ROOT}/outputs/logs/{data_name}-val/{seq}/{vid_name}-all-shot-0-0-180"
     scene_dict = read_pickle(f"{res_dir}/{vid_name}_scene_dict.pkl")
@@ -49,7 +61,7 @@ def get_camera_transform(seq, vid_name, return_gnd=False, data_name='chi3d'):
     Txm90 = Q(axis=[1, 0, 0], angle=-np.pi / 2).transformation_matrix.astype(np.float32)
     Txm90 = torch.tensor(Txm90).float().to(T_c2w.device)
     # T_c2w contains cameras for each frame, use this for dynamic camera
-    final_Rt = Txm90[None] @ Rt_gnd_inv[None] #@ T_c2w
+    final_Rt = Txm90[None] @ Rt_gnd_inv[None]  # @ T_c2w
     scene_dict['final_Rt'] = final_Rt
     scene_dict['res_dir'] = res_dir
 
@@ -71,10 +83,11 @@ def rot_pose(pose_aa, final_Rt):
 
 def correct_smplx_offset(pose_aa_i, trans_i, betas, final_Rt, get_verts=False):
     (_, joints), _ = smpl_to_verts(pose_aa_i, trans_i, betas=betas, return_joints=True)
-    pelvis = joints[0, :, 0, None] # (B, 1, 3)
+    pelvis = joints[0, :, 0, None]  # (B, 1, 3)
     trans_i = trans_i[:, None]
     pelvis = pelvis.to(trans_i) - trans_i
-    trans_i = (final_Rt[:, :3, :3] @ (trans_i + pelvis).permute(0, 2, 1)).permute(0, 2, 1) + final_Rt[:, None, :3, 3] - pelvis
+    trans_i = (final_Rt[:, :3, :3] @ (trans_i + pelvis).permute(0, 2, 1)).permute(0, 2, 1) + final_Rt[:, None, :3,
+                                                                                             3] - pelvis
     trans_i = trans_i[:, 0]
     if get_verts:
         verts, faces = smpl_to_verts(pose_aa_i, trans_i, betas=betas, return_joints=False)
@@ -99,7 +112,6 @@ def read_smpl_meshes(data_chi3d_this, seq_len=None, get_joints=False):
 
 
 def parse_smpl_data(res_dict, data_name='expi'):
-
     root_aa = res_dict['root_orient']
     body_pose_aa = res_dict["pose_body"]
     trans = res_dict["trans"]
@@ -125,9 +137,9 @@ def parse_smpl_data(res_dict, data_name='expi'):
     B = root_aa.shape[0]
 
     body_dim = body_pose_aa.shape[-1]
-    if body_dim==69:
+    if body_dim == 69:
         pose_aa = torch.cat([root_aa, body_pose_aa], dim=-1)
-    elif body_dim==63:
+    elif body_dim == 63:
         pose_aa = torch.cat([root_aa, body_pose_aa, torch.zeros(B, 6).to(root_aa)], dim=-1)
     else:
         raise ValueError(f"ERROR: Weird body_dim: {body_dim}!!")
@@ -139,6 +151,7 @@ def parse_smpl_data(res_dict, data_name='expi'):
     }
     return return_dict
 
+
 def jpos_pred_from_res_dict(res_dict):
     jpos_pred_ = res_dict["joints"]
     # SMPL-H joints, not SMPL
@@ -147,7 +160,8 @@ def jpos_pred_from_res_dict(res_dict):
     jpos_pred[:, :, -1] = jpos_pred_[:, :, 37]
     return jpos_pred
 
-def read_slahmr_transform_and_body(seq, vid_name, data_name='chi3d',  sub_dir=None, sla_postfix=None):
+
+def read_slahmr_transform_and_body(seq, vid_name, data_name='chi3d', sub_dir=None, sla_postfix=None):
     try:
         res_dict, Rx90_Rtgnd = get_camera_transform(seq, vid_name, return_gnd=True, data_name=data_name)
         # out = get_slahmr_emb2cam_transform(data_name, seq_name[4:], False, seq_num)
@@ -190,9 +204,8 @@ def read_slahmr_transform_and_body(seq, vid_name, data_name='chi3d',  sub_dir=No
         trans = torch.tensor(trans_orig).float()
     else:
         pose_aa = torch.cat([root_aa, body_pose_aa, torch.zeros(B, seq_len, 6).to(root_aa)], dim=-1)
-    
 
-    return_dict= {
+    return_dict = {
         'final_Rt': final_Rt,
         'jpos_pred': jpos_pred,
         'pose_aa': pose_aa,
@@ -223,12 +236,14 @@ def apply_transform(jpos_pred, final_Rt):
     jpos_pred_world = (final_Rt[:, :3, :3] @ jpos_pred.permute(0, 2, 1)).permute(0, 2, 1) + final_Rt[:, None, :3, 3]
     return jpos_pred_world
 
+
 def rot_pose_180z(jpos_pred_world):
     """for torch"""
     T = Q(axis=[0, 0, 1], angle=np.pi).transformation_matrix.astype(np.float32)
     Tz180 = torch.from_numpy(T).to(jpos_pred_world.device)
     jpos_pred_world_rot = (Tz180[None, :3, :3] @ jpos_pred_world.permute(0, 2, 1)).permute(0, 2, 1)
     return jpos_pred_world_rot
+
 
 def transform_pred_joints(jpos_pred, final_Rt, rot_180z=True):
     j_pred_rot = []
@@ -243,7 +258,7 @@ def transform_pred_joints(jpos_pred, final_Rt, rot_180z=True):
         else:
             jpos_pred_world_rot = jpos_pred_world
         j_pred_rot.append(jpos_pred_world_rot)
-    
+
     j_pred_rot = torch.stack(j_pred_rot, dim=0)
     return j_pred_rot
 
@@ -255,7 +270,7 @@ def match_3d_joints(j_pred_rot, j_gts, debug=False):
     j_pred_rel = j_pred_rot_one - j_pred_rot_one[:, 0:1]
 
     j_gts_one = j_gts[:, 0]
-    j_gts_rel = j_gts_one - j_gts_one[:, 0:1]#.shape
+    j_gts_rel = j_gts_one - j_gts_one[:, 0:1]  # .shape
 
     j_pred_rel = j_pred_rel.numpy()
     j_gts_rel = j_gts_rel.numpy()
@@ -286,15 +301,12 @@ def get_dataset_data(ROOT, data_name, subj_name):
     return data_chi3d, data_chi3d_2
 
 
-
-
-
 T = Q(axis=[0, 0, 1], angle=np.pi).transformation_matrix.astype(np.float32)
 Tz180 = torch.from_numpy(T).cuda()
 
 
 def get_emb_paths(data_name, exp_name, slahmr_overwrite=False, get_add=False, sla_root=False):
-    ROOT = "/home/nugrinovic/code/CVPR_2024/multiphys-test"
+    ROOT = "."
     SLA_ROOT = "/home/nugrinovic/code/CVPR_2024/slahmr_release/slahmr"
 
     RES_ROOT = f"{ROOT}/results/scene+/tcn_voxel_4_5_chi3d_multi_hum/results"
@@ -349,6 +361,7 @@ def parse_emb_gt_data(data_chi3d_p1, data_chi3d_p2, sname):
     Rt = parse_cam2world(gt_data_p1)
     return gt_chi3d, Rt
 
+
 def get_emb_robot_models(mean_shape, smpl_robot):
     models = []
     smpl_robot.load_from_skeleton(mean_shape[0, None], gender=[0], objs_info=None)
@@ -359,6 +372,7 @@ def get_emb_robot_models(mean_shape, smpl_robot):
     model = mujoco_py.load_model_from_xml(smpl_robot.export_xml_string().decode("utf-8"))
     models.append(model)
     return models
+
 
 def transform_coords_smpl_data(p_id, pose_aa, trans, mean_shape, final_Rt, device):
     # pose_aa is (B, 72), trans is (B, 3), needs to be converted to world
@@ -377,8 +391,6 @@ def transform_coords_smpl_data(p_id, pose_aa, trans, mean_shape, final_Rt, devic
 
 
 def prepare_slahmr(args):
-
-
     """
     code intended to
     prepare_slahmr_results for computing metrics and comp to baseline,
@@ -392,7 +404,7 @@ def prepare_slahmr(args):
         gt_targets = self.humanoid[n].qpos_fk(torch.from_numpy(gt_qpos))
         self.gt_targets = self.smpl_humanoid.qpos_fk_batch(self.ar_context["qpos"])
     """
-    
+
     debug = args.debug
     data_name = args.data_name
     smpl_robot, humanoid, cc_cfg = load_humanoid()
@@ -400,18 +412,18 @@ def prepare_slahmr(args):
 
     print(f"SUB_DIR: {args.sub_dir}")
     print(f"SLA_POSTFIX: {args.sla_postfix}")
-    
+
     for subj_name in SEQS:
         print(f"Parsing data {subj_name}...")
         # get the GT from dataset processed files
         sname = subj_name if data_name == 'chi3d' or data_name == 'expi' else '.'
         data_chi3d_p1, data_chi3d_p2 = get_dataset_data(ROOT, data_name, sname)
-        
+
         results_dict = defaultdict(list)
         results_dict_verts = defaultdict(list)
         # for seq_name in chi3d_names:
         for n, seq_name in enumerate(tqdm(data_chi3d_p1)):
-            
+
             if args.filter_seq is not None:
                 if seq_name != args.filter_seq:
                     print("*** WARNING: filtering seqs")
@@ -431,8 +443,8 @@ def prepare_slahmr(args):
             if return_dict is None:
                 print("failed to read slhamr results, skipping")
                 continue
-            final_Rt = return_dict["final_Rt"] # (1, 4, 4)
-            jpos_pred = return_dict["jpos_pred"] # this comes from res_dict["joints"] from slahmr
+            final_Rt = return_dict["final_Rt"]  # (1, 4, 4)
+            jpos_pred = return_dict["jpos_pred"]  # this comes from res_dict["joints"] from slahmr
             pose_aa = return_dict["pose_aa"]
             trans = return_dict["trans"]
             shape = return_dict["shape"]
@@ -454,7 +466,6 @@ def prepare_slahmr(args):
                 gt_chi3d, Rt = parse_emb_gt_data(data_chi3d_p1, data_chi3d_p2, seq_n)
 
             smpl_dict_gt, smpl_gt_jts = get_smpl_gt_data(gt_chi3d)
-
 
             if args.data_name == 'hi4d':
                 # for hi4d the GT cam is world2cam, need to invert. for chi3d, hoewever, it is already cam2world
@@ -480,8 +491,10 @@ def prepare_slahmr(args):
                 op = f"inspect_out/prepare_slahmr/{args.data_name}/{seq_name}"
                 idx = 100
                 joints_to_skel(jpos_pred[:, idx].cpu(), f"{op}/skels_pred_{idx:03d}.ply", format='smpl', radius=0.015)
-                joints_to_skel(j_pred_world[:, idx].cpu(), f"{op}/skels_world_{idx:03d}.ply", format='smpl', radius=0.015)
-                joints_to_skel(smpl_gt_jts[:, idx].cpu(), f"{op}/skels_smplgt_{idx:03d}.ply", format='smpl', radius=0.015)
+                joints_to_skel(j_pred_world[:, idx].cpu(), f"{op}/skels_world_{idx:03d}.ply", format='smpl',
+                               radius=0.015)
+                joints_to_skel(smpl_gt_jts[:, idx].cpu(), f"{op}/skels_smplgt_{idx:03d}.ply", format='smpl',
+                               radius=0.015)
 
             # match pred poses with GT poses, they are not in the same order
             # match j_gts from embdata  w/ slahmr preds in relative 3D space
@@ -496,7 +509,7 @@ def prepare_slahmr(args):
 
             # do matching to get each correct kpts, copy slahmr code
             for p_id in range(len(jpos_pred[:2])):
-                #NOTE: for some reason we have to rotate the joints and SMPL 180 over z-axis --> only when using gt from embpose.
+                # NOTE: for some reason we have to rotate the joints and SMPL 180 over z-axis --> only when using gt from embpose.
                 # these are now directly from smpl
                 gt_jts = smpl_gt_jts[col_ind_smpl[p_id]]
 
@@ -505,7 +518,7 @@ def prepare_slahmr(args):
                                                                                    final_Rt, device)
                 qpos_rot = smpl_to_qpose_torch(pose_aa_w_rot_i.cuda(), model, trans=trans_w_rot_i, count_offset=False)
                 qpos_rot = qpos_rot.cpu().numpy()
-                
+
                 gt_data = {}
                 gt_data_verts = {}
 
@@ -555,7 +568,6 @@ def prepare_slahmr(args):
                     # save file
                     results_dict_verts[seq_name].append(gt_data_verts)
 
-
         # add subdir for diff slahmr post optims
         # path = f"{path}/{args.sub_dir}" if args.sub_dir is not None else path
         # save the results
@@ -572,11 +584,12 @@ def prepare_slahmr(args):
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', type=int, choices=[0, 1], default=0)
     parser.add_argument('--subj_name', type=str, default='.')
     parser.add_argument('--data_name', type=str, choices=['chi3d', 'hi4d', 'expi'], default='chi3d')
-    parser.add_argument("--exp_name", type=str, default='normal_op') # this has to be fixed here
+    parser.add_argument("--exp_name", type=str, default='normal_op')  # this has to be fixed here
     parser.add_argument('--filter_seq', type=str, default=None)
     parser.add_argument("--save_verts", type=int, choices=[0, 1], default=0)
     parser.add_argument("--sub_dir", type=str, default=None)

@@ -146,20 +146,20 @@ Then, you need to process the results to prepare them for the evaluation scripts
 to run the `metrics/prepare_pred_results.py` script, specifying the dataset name and the experiment name, 
 for example:
 ```bash
-metrics/prepare_pred_results.py --data_name chi3d --exp_name slahmr_override_loop2
+python metrics/prepare_pred_results.py --data_name chi3d --exp_name slahmr_override_loop2
 ```
 This will generate `.pkl` files with the names of the subjects, for example `s02.pkl` for CHI3D under the 
 experiment folder. In the case, you want to run the penetration metric with SDF, you need to 
 generate a file that saves the vertices for each sequence. To do this, you need to add the `--save_verts` option, 
 thus, run the following command.
 ```bash
-metrics/prepare_pred_results.py --data_name chi3d --exp_name slahmr_override_loop2 --save_verts
+python metrics/prepare_pred_results.py --data_name chi3d --exp_name slahmr_override_loop2 --save_verts=1
 ```
 This will generate `_verts.pkl` files with the names of the subjects, for example `s02_verts.pkl` for CHI3D under the 
-experiment folder.
+experiment folder. These files containing vertices are necesary to compute the SDF penetration metric.
 
 You need to either generate both the `.pkl` and `_verts.pkl` also for each baseline you want to measure (EmbPose-mp, 
-SLAHMR) or you can download the pre-processed results from [HERE](link)
+SLAHMR) or you can download the pre-processed results from [here](link).
 
 ### Run evaluation
 For evaluation, use the script `metrics/compute_metrics_all.py`. This generate 
@@ -181,6 +181,10 @@ python metrics/compute_metrics_all.py --data_name chi3d --metric_type sdf
 
 ```
 You can choose any of the 3 datasets: ['chi3d', 'hi4d', 'expi']. 
+NOTE: the `metrics/compute_metrics_all.py` script is meant to compute the 
+results table from the paper for all experiments and all subjects for each
+dataset, so in order to generate an output file, you need to generate results
+for all subjects in the dataset you choose. 
 
 ## TODO List
 
