@@ -13,7 +13,7 @@ python run.py --cfg tcn_voxel_4_5_chi3d_multi_hum --data sample_data/expi/expi_a
 python run.py --cfg tcn_voxel_4_5_chi3d_multi_hum --data sample_data/expi/expi_acro1_p1_phalpBox_all_slaInit_slaCam.pkl --data_name expi --name slahmr_override_loop2 --loops_uhc 2 --filter acro1_frog-turn1_cam20
 # chi3d sequences
 # spatial placement: s03_Hug_7
-python run.py --cfg tcn_voxel_4_5_chi3d_multi_hum --data sample_data/chi3d_slahmr/chi3d_slahmr_s03_p1_phalpBox_all_slaInit_slaCam.pkl --data_name chi3d --name slahmr_override --loops_uhc 2 --filter s03_Hug_7
+python run.py --cfg tcn_voxel_4_5_chi3d_multi_hum --data sample_data/chi3d_slahmr/chi3d_slahmr_s03_p1_phalpBox_all_slaInit_slaCam.pkl --data_name chi3d --name slahmr_override_loop2 --loops_uhc 2 --filter s03_Hug_7
 # spatial placement: s02_Hug_5
 python run.py --cfg tcn_voxel_4_5_chi3d_multi_hum --data sample_data/chi3d_slahmr/chi3d_slahmr_s02_p1_phalpBox_all_slaInit_slaCam.pkl --data_name chi3d --name slahmr_override_loop2 --loops_uhc 2 --filter s02_Hug_5
 # hi4d sequences
