@@ -26,16 +26,10 @@ from multiphys.process_data.process.process import read_SLAHMR_data
 from metrics.prepare import get_proc_data
 
 torch.set_default_dtype(torch.float32)
-
-
 np.set_printoptions(precision=4)
-smplx_folder = '/home/nugrinovic/code/CVPR_2024/EmbodiedPose/data'
 
 def get_paths():
-    if "oriong" in hostname:
-        SLA_ROOT = "/sailhome/nugrinov/code/CVPR_2024/slahmr_release/slahmr"
-    else:
-        SLA_ROOT = "/home/nugrinovic/code/CVPR_2024/slahmr_release/slahmr"
+    SLA_ROOT = "/home/nugrinovic/code/slahmr_release/slahmr"
     VIDEOS_ROOT = f"{SLA_ROOT}/videos"
     return SLA_ROOT, VIDEOS_ROOT
 
