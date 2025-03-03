@@ -95,7 +95,7 @@ You MAY need to run the following or similar commands, depending on your system:
 you need to properly install the SDF package. 
 Please follow the instructions found [here](https://github.com/nicolasugrinovic/multiphys/blob/main/sdf/README.md). 
 
-## Generating physically corrected motion.
+## Demo: Generating physically corrected motion.
 The data used here, including SLAHMR estimates should have 
 been donwloaded and placed to the correct folders by using the `fetch_demo_data.sh` script. 
 
@@ -186,10 +186,27 @@ results table from the paper for all experiments and all subjects for each
 dataset, so in order to generate an output file, you need to generate results
 for all subjects in the dataset you choose. 
 
+## Data pre-processing
+To generate data in the `./sample_data` directory, you need to do the following:
+1. Add two scripts into the SLAHMR repo: 
+ `third_party/slahmr/run_opt_world.py` and `third_party/slahmr/run_vis_world.py` and then 
+run the commands place in `./scripts` for each subject in each dataset, e.g.:
+```bash
+bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s02 0 chi3d
+bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s03 0 chi3d
+bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s04 0 chi3d
+```
+This will generate `{seq_name}_scene_dict.pkl files` in the SLAHMR output folder 
+which is then read by MultiPhys.
+ 2. Run the commands from `data_preproc.sh` for each dataset. 
+This will generate the files directly to the `sample_data` folder.
+ 3. Finally you can run the demo code on your processed data as explained above.
+
+
 ## TODO List
 
 - [x] Demo/inference code
-- [ ] Data pre-processing code
+- [x] Data pre-processing code
 - [x] Evaluation
 
 ## Acknowledgements
