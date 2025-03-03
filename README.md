@@ -192,15 +192,15 @@ To generate data in the `./sample_data` directory, you need to do the following:
  `third_party/slahmr/run_opt_world.py` and `third_party/slahmr/run_vis_world.py` and then 
 run the commands place in `./scripts` for each subject in each dataset, e.g.:
 ```bash
-bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s02 0 chi3d
-bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s03 0 chi3d
-bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s04 0 chi3d
-```
-This will generate `{seq_name}_scene_dict.pkl files` in the SLAHMR output folder 
-which is then read by MultiPhys.
- 2. Run the commands from `data_preproc.sh` for each dataset. 
-This will generate the files directly to the `sample_data` folder.
- 3. Finally you can run the demo code on your processed data as explained above.
+  bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s02 0 chi3d
+  bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s03 0 chi3d
+  bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s04 0 chi3d
+   ```
+   This will generate `{seq_name}_scene_dict.pkl files` in the SLAHMR output folder 
+   which is then read by MultiPhys.
+
+2. Run the commands from `data_preproc.sh` for each dataset. This will generate the files directly to the `sample_data` folder.
+3. Finally you can run the demo code on your processed data as explained above.
 
 
 ## TODO List
