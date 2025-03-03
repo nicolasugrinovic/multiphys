@@ -23,7 +23,7 @@ def process(args, debug=False):
     This script processes SLAHMR results and prepares them for the simulator.
     It takes ViTpose 2D keypoints and stores them for embPose
     """
-    SLA_ROOT = "/home/nugrinovic/code/CVPR_2024/slahmr_release/slahmr"
+    SLA_ROOT = "/home/nugrinovic/code/slahmr_release/slahmr"
     VIDEOS_ROOT = f"{SLA_ROOT}/videos"
     
     int_actions = ["Hug", "Push", "Posing"]

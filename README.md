@@ -202,6 +202,7 @@ run the commands place in `./scripts` for each subject in each dataset, e.g.:
 2. Run the commands from `data_preproc.sh` for each dataset. This will generate the files directly to the `sample_data` folder.
 3. Finally you can run the demo code on your processed data as explained above.
 
+NOTE: please replace the path with your own path in the code.
 
 ## TODO List
 

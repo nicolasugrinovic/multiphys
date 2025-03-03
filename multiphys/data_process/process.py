@@ -9,33 +9,28 @@ from pathlib import Path
 from utils.smpl import smpl_to_verts
 from utils.misc import save_trimesh
 import trimesh
-from utils.misc import read_image_PIL
 from multiphys.data_process.dynamic_cam_projection import get_slahmr_emb2cam_transform
 from utils.net_utils import replace_slahmr_path
 from utils.torch_utils import to_numpy
 from multiphys.data_process.smpl_transforms import rot_pose
 from multiphys.data_process.smpl_transforms import rot_and_correct_smplx_offset
-from utils.bbox import bbox_from_joints_several
 from tqdm import tqdm
-from utils.misc import plot_skel_cv2
-from utils.misc import plot_boxes_w_persID_cv2
-from utils.misc import save_img
 from utils.misc import read_pickle
-from utils.video import make_video
 from scipy.optimize import linear_sum_assignment
 
 np.set_printoptions(precision=4)
 
 
 def read_PHALP_data(VIDEOS_ROOT, data_name, subject, seq_name):
+    # REPLACE WITH YOUR PATH
     # use PHALP bbox here, so that it can work with multiple people
     if data_name == 'chi3d':
         phalp_path = f"{VIDEOS_ROOT}/{data_name}/train/{subject}/phalp/{seq_name}.pkl"
     elif data_name == 'expi':
-        phalp_path = f"/home/nugrinovic/code/NEURIPS_2023/slahmr/videos/{data_name}/{subject}/phalp/{seq_name}.pkl"
+        phalp_path = f"/home/nugrinovic/code/slahmr/videos/{data_name}/{subject}/phalp/{seq_name}.pkl"
         phalp_path = replace_slahmr_path(phalp_path)
     else:
-        phalp_path = f"/home/nugrinovic/code/NEURIPS_2023/slahmr/videos/{data_name}/phalp/{seq_name}.pkl"
+        phalp_path = f"/home/nugrinovic/code/slahmr/videos/{data_name}/phalp/{seq_name}.pkl"
         phalp_path = replace_slahmr_path(phalp_path)
     try:
         phalp_data = joblib.load(phalp_path)
@@ -303,67 +298,6 @@ def fill_op_jts(op_kpts):
     op_kpts[:, :, 1] = (op_kpts[:, :, 2] + op_kpts[:, :, 5]) / 2
     op_kpts[:, :, 8] = (op_kpts[:, :, 9] + op_kpts[:, :, 12]) / 2
     return op_kpts
-
-
-def make_video_w_skel(kpts_2d, seq_name, name="", data_name="viw"):
-    im_path = f"/home/nugrinovic/code/NEURIPS_2023/slahmr/videos/{data_name}/images/{seq_name}"
-    im_path = replace_slahmr_path(im_path)
-    output_dir = f"/home/nugrinovic/code/NEURIPS_2023/slahmr/videos/{data_name}/vis_joints/{seq_name}"
-    output_dir = replace_slahmr_path(output_dir)
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    Path(f"{output_dir}{name}").mkdir(parents=True, exist_ok=True)
-    for n, vit_jts in enumerate(tqdm(kpts_2d)):
-        this_imgp = f"{im_path}/{n+1:06d}.jpg"
-        img = read_image_PIL(this_imgp)
-        j2d_all_i = fill_op_jts(vit_jts[..., :2][None])[0]
-        img_w_jts = plot_skel_cv2(img, j2d_all_i)
-        save_img(f"{output_dir}{name}/img_{n+1:04d}.png", img_w_jts)
-    make_video(f"{output_dir}{name}/img_{n+1:04d}.png", ext="png", delete_imgs=True)
-
-
-def get_img_w_pID(n, vit_jts, seq_name, t_id_all=None, data_name="viw", name=""):
-    im_path = f"/home/nugrinovic/code/NEURIPS_2023/slahmr/videos/{data_name}/images/{seq_name}"
-    im_path = replace_slahmr_path(im_path)
-    this_imgp = f"{im_path}/{n + 1:06d}.jpg"
-    img = read_image_PIL(this_imgp)
-    vitpose_m = mask_joints_w_vis(vit_jts)
-    try:
-        bbox_vit = bbox_from_joints_several(vitpose_m)
-    except:
-        print(f"problem with shape of vitpose_m {vitpose_m[:, :, :2].shape}")
-        print(f" vis is {vit_jts}")
-    if t_id_all is None:
-        img_w_boxes = plot_boxes_w_persID_cv2(img, bbox_vit, number_list=[1, 2], do_return=True)
-    else:
-        img_w_boxes = plot_boxes_w_persID_cv2(img, bbox_vit, number_list=t_id_all[n], do_return=True)
-    return img_w_boxes
-        
-
-def make_video_w_pID(kpts_2d, seq_name, t_id_all=None, data_name="viw", name=""):
-    im_path = f"/home/nugrinovic/code/NEURIPS_2023/slahmr/videos/{data_name}/images/{seq_name}"
-    im_path = replace_slahmr_path(im_path)
-    output_dir = f"/home/nugrinovic/code/NEURIPS_2023/slahmr/videos/{data_name}/vis_joints/{seq_name}"
-    output_dir = replace_slahmr_path(output_dir)
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    Path(f"{output_dir}_boxes{name}").mkdir(parents=True, exist_ok=True)
-    for n, vit_jts in enumerate(tqdm(kpts_2d)):
-        this_imgp = f"{im_path}/{n+1:06d}.jpg"
-        img = read_image_PIL(this_imgp)
-        vitpose_m = mask_joints_w_vis(vit_jts)
-
-        try:
-            bbox_vit = bbox_from_joints_several(vitpose_m)
-        except:
-            print(f"problem with shape of vitpose_m {vitpose_m[:, :, :2].shape}")
-            print(f" vis is {vit_jts}")
-
-        if t_id_all is None:
-            img_w_boxes = plot_boxes_w_persID_cv2(img, bbox_vit, number_list=[1, 2], do_return=True)
-        else:
-            img_w_boxes = plot_boxes_w_persID_cv2(img, bbox_vit, number_list=t_id_all[n], do_return=True)
-
-        save_img(f"{output_dir}_boxes{name}/img_{n+1:04d}.png", img_w_boxes)
-    make_video(f"{output_dir}_boxes{name}/img_{n+1:04d}.png", ext="png", delete_imgs=True)
 
 
 def get_phalp_kpts_simple(data, seq_name, ref_jts, data_name):
