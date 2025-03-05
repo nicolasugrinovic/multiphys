@@ -190,7 +190,7 @@ for all subjects in the dataset you choose.
 To generate data in the `./sample_data` directory, you need to do the following:
 1. Add two scripts into the SLAHMR repo: 
  `third_party/slahmr/run_opt_world.py` and `third_party/slahmr/run_vis_world.py` and then 
-run the commands place in `./scripts` for each subject in each dataset, e.g.:
+run the commands placed in `./scripts` for each subject in each dataset, e.g.:
 ```bash
   bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s02 0 chi3d
   bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s03 0 chi3d
