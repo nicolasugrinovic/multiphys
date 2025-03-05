@@ -196,8 +196,14 @@ run the commands placed in `./scripts` for each subject in each dataset, e.g.:
   bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s03 0 chi3d
   bash scripts/camera_world/run_opt_world_chi3d.sh chi3d/train/s04 0 chi3d
    ```
+   Note: you need to change the `root` variable inside these scripts to point to your own SLAHMR repo directory.  
    This will generate `{seq_name}_scene_dict.pkl files` in the SLAHMR output folder 
    which is then read by MultiPhys.
+   If the previous scripts does not work for you, please just run the following command for 
+   each video, making sure that you change the `data.root` and `data.seq` arguments accordingly:
+   ```bash
+   python run_opt_world.py data=chi3d run_opt=False run_vis=True data.root=$root/videos/chi3d/train/$seq_num data.seq="${video}" data.seq_id=$seq_num
+   ```
 
 2. Run the commands from `data_preproc.sh` for each dataset. This will generate the files directly to the `sample_data` folder.
 3. Finally you can run the demo code on your processed data as explained above.
