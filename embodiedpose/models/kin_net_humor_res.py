@@ -638,31 +638,22 @@ class KinNetHumorRes(KinNetBase):
         return torch.mean(log_prob)
 
     def load_camera_params(self, scene_name, seq_name):
-        data_name = self.cfg.data_name
-        if data_name == 'chi3d':
-            cam_path = 'data/chi3d'
-            seq_name_ = seq_name.split('_')[0]
-            path = f"{cam_path}/chi3d_{seq_name_}_embodied_cam2w_p2.pkl"
-            print(f"****LOADING CAM from {path}")
-            cam_data = read_pickle(path)[f'{seq_name_}_Grab_1']['cam2world']
-            R = np.array(cam_data['R'])
-            tr = np.array(cam_data['T']) # (1, 3)
-            tr = tr[0] # (3, )
-            K_ = cam_data["K"]
-            K = np.eye(3).astype(np.float32)  # (3, 3)
-            K[0, 0] = K_["f"][0]
-            K[1, 1] = K_["f"][1]
-            K[0, 2] = K_["c"][0]
-            K[1, 2] = K_["c"][1]
-        else:
-            cam_path = self.cfg.data_specs['prox_path']
-            with open(f'{cam_path}/calibration/Color.json', 'r') as f:
-                cameraInfo = json.load(f)
-                K = np.array(cameraInfo['camera_mtx']).astype(np.float32)
-            with open(f'{cam_path}/cam2world/{scene_name}.json', 'r') as f:
-                camera_pose = np.array(json.load(f)).astype(np.float32)
-                R = camera_pose[:3, :3]
-                tr = camera_pose[:3, 3] # (3,)
+        # data_name = self.cfg.data_name
+        cam_path = 'data/chi3d'
+        # seq_name_ = seq_name.split('_')[0]
+        seq_name_= "s02"
+        path = f"{cam_path}/chi3d_{seq_name_}_embodied_cam2w_p2.pkl"
+        print(f"****LOADING CAM from {path}")
+        cam_data = read_pickle(path)[f'{seq_name_}_Grab_1']['cam2world']
+        R = np.array(cam_data['R'])
+        tr = np.array(cam_data['T']) # (1, 3)
+        tr = tr[0] # (3, )
+        K_ = cam_data["K"]
+        K = np.eye(3).astype(np.float32)  # (3, 3)
+        K[0, 0] = K_["f"][0]
+        K[1, 1] = K_["f"][1]
+        K[0, 2] = K_["c"][0]
+        K[1, 2] = K_["c"][1]
 
         R = R.T
         tr = -np.matmul(R, tr)
