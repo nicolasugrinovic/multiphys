@@ -12,7 +12,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from data import get_dataset_from_cfg, expand_source_paths
+from third_party.slahmr.data import get_dataset_from_cfg, expand_source_paths
 
 from humor.humor_model import HumorModel
 from optim.base_scene import BaseSceneModel
