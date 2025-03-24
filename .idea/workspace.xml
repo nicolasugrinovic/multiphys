@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="702abfb8-c416-432b-89a8-34234a40ccae" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="n_agents" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2fsKF13YCpDETTvo8X5Nw6j0WwA" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.mappings&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.symlinks&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.date&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.permissions&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.size&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/nugrinovic/code/CVPR_2024/multiphys/third_party/slahmr/confs/data&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/third_party/slahmr/confs/data" />
+      <recent name="$PROJECT_DIR$/third_party/slahmr/confs" />
+      <recent name="$PROJECT_DIR$/utils" />
+      <recent name="$PROJECT_DIR$/third_party/slahmr" />
+      <recent name="$PROJECT_DIR$/multiphys" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/eval" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="702abfb8-c416-432b-89a8-34234a40ccae" name="Changes" comment="" />
+      <created>1714584243273</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1714584243273</updated>
+      <workItem from="1714584245041" duration="3381000" />
+      <workItem from="1714738682584" duration="728000" />
+      <workItem from="1718286694363" duration="1321000" />
+      <workItem from="1718294992627" duration="615000" />
+      <workItem from="1718441492337" duration="1406000" />
+      <workItem from="1722844164261" duration="253000" />
+      <workItem from="1724848595032" duration="554000" />
+      <workItem from="1729841559547" duration="38000" />
+      <workItem from="1730041572837" duration="1153000" />
+      <workItem from="1730317248703" duration="141000" />
+      <workItem from="1730318454479" duration="2160000" />
+      <workItem from="1731072551084" duration="626000" />
+      <workItem from="1732116763731" duration="418000" />
+      <workItem from="1732498126914" duration="2466000" />
+      <workItem from="1737305259945" duration="2118000" />
+      <workItem from="1737373113556" duration="4704000" />
+      <workItem from="1737409641926" duration="4908000" />
+      <workItem from="1737474664232" duration="611000" />
+      <workItem from="1737835686994" duration="6000" />
+      <workItem from="1738142135612" duration="1722000" />
+      <workItem from="1738147772341" duration="26000" />
+      <workItem from="1740995455510" duration="604000" />
+      <workItem from="1740996728914" duration="151000" />
+      <workItem from="1741008282289" duration="1540000" />
+      <workItem from="1741014791909" duration="398000" />
+      <workItem from="1741170391794" duration="1487000" />
+      <workItem from="1742561806287" duration="675000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

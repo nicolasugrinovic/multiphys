@@ -1,0 +1,28 @@
+type: hi4d
+split: val
+root: /home/nugrinovic/code/NEURIPS_2023/slahmr/videos/demo  # put your videos in root/videos/vid.mp4
+video_dir: videos
+seq: 022691_mpii_testX
+ext: mp4
+src_path: ${data.root}/${data.video_dir}/${data.seq}.${data.ext}
+overwrite: False
+for_embpose: False
+frame_opts:
+  ext: jpg
+  #  be carefull with the fps! it should be the same as the one used for the video
+  fps: 30
+  start_sec: 0
+  end_sec: -1
+use_cams: True
+track_ids: "all"
+shot_idx: 0
+start_idx: 0
+end_idx: 180
+split_cameras: True
+name: ${data.seq}-${data.track_ids}-shot-${data.shot_idx}-${data.start_idx}-${data.end_idx}
+exp_name: viw_easy
+sources:
+  images: ${data.root}/images/${data.seq}
+  cameras: ${data.root}/slahmr/cameras/${data.seq}/shot-${data.shot_idx}
+  tracks: ${data.root}/slahmr/track_preds/${data.seq}
+  shots: ${data.root}/slahmr/shot_idcs/${data.seq}.json

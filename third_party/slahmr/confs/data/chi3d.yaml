@@ -1,0 +1,27 @@
+type: chi3d
+split: val
+root: /home/nugrinovic/code/NEURIPS_2023/slahmr/videos/demo  # put your videos in root/videos/vid.mp4
+video_dir: videos/50591643
+seq: 022691_mpii_test
+ext: mp4
+src_path: ${data.root}/${data.video_dir}/${data.seq}.${data.ext}
+overwrite: False
+for_embpose: False
+frame_opts:
+  ext: jpg
+  fps: 50
+  start_sec: 0
+  end_sec: -1
+use_cams: True
+track_ids: "all"
+seq_id: "s02"
+shot_idx: 0
+start_idx: 0
+end_idx: 180
+split_cameras: True
+name: ${data.seq_id}/${data.seq}-${data.track_ids}-shot-${data.shot_idx}-${data.start_idx}-${data.end_idx}
+sources:
+  images: ${data.root}/images/${data.seq}
+  cameras: ${data.root}/slahmr/cameras/${data.seq}/shot-${data.shot_idx}
+  tracks: ${data.root}/slahmr/track_preds/${data.seq}
+  shots: ${data.root}/slahmr/shot_idcs/${data.seq}.json
